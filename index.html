@@ -228,6 +228,38 @@ body{background:#000005;color:var(--text);font-family:-apple-system,'Apple SD Go
   #sidebar{max-height:40vh;}
   .econ-grid{grid-template-columns:1fr 1fr;}
 }
+/* ── 자원 섹션 ── */
+.res-item{background:rgba(8,12,26,0.7);border-radius:6px;padding:8px 10px;margin-bottom:6px;border:1px solid var(--border3);}
+.res-name{font-size:10.5px;font-weight:700;color:var(--green);margin-bottom:4px;}
+.res-why{font-size:10px;color:var(--muted);line-height:1.58;margin-bottom:4px;}
+.res-invest{font-size:9.5px;color:#ffd060;line-height:1.5;}
+.res-note{font-size:10px;color:var(--muted);line-height:1.6;padding:6px 0 0;border-top:1px solid var(--border);margin-top:4px;font-style:italic;}
+/* ── 역사 섹션 ── */
+.hist-body{font-size:10px;color:var(--muted);line-height:1.75;}
+.hist-body b{color:var(--text);font-size:10.5px;}
+/* ── 뉴스 자동업데이트 패널 ── */
+#live-news-panel{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+#live-news-panel::-webkit-scrollbar{width:3px;}
+#live-news-panel::-webkit-scrollbar-thumb{background:rgba(56,190,255,.2);}
+.ln-loading{padding:20px 14px;text-align:center;color:var(--muted);font-size:11px;}
+.ln-loading .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ln-item{padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;}
+.ln-item:hover{background:rgba(56,190,255,.04);}
+.ln-date{font-size:9px;color:var(--muted);margin-bottom:3px;display:flex;align-items:center;gap:5px;}
+.ln-badge{font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;}
+.ln-badge.geo{background:rgba(255,112,67,.18);color:#ff7043;}
+.ln-badge.eco{background:rgba(56,190,255,.18);color:#38beff;}
+.ln-badge.war{background:rgba(255,75,110,.18);color:#ff4b6e;}
+.ln-badge.res{background:rgba(67,232,151,.18);color:#43e897;}
+.ln-title{font-size:11px;font-weight:600;color:var(--text);line-height:1.45;margin-bottom:3px;}
+.ln-body{font-size:10px;color:var(--muted);line-height:1.5;}
+.ln-impact{font-size:9.5px;color:#ffd060;margin-top:3px;}
+.ln-refresh{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border2);flex-shrink:0;}
+.ln-refresh-btn{font-size:10px;padding:4px 10px;background:rgba(56,190,255,.08);border:1px solid rgba(56,190,255,.25);border-radius:5px;color:var(--blue);cursor:pointer;transition:all .15s;}
+.ln-refresh-btn:hover{background:rgba(56,190,255,.15);}
+.ln-refresh-btn:disabled{opacity:.4;cursor:default;}
+.ln-status{font-size:9px;color:var(--muted);}
 #hint{position:absolute;top:11px;left:50%;transform:translateX(-50%);font-size:9.5px;color:var(--muted);background:rgba(3,5,16,0.8);border:1px solid var(--border2);border-radius:20px;padding:3px 10px;pointer-events:none;z-index:4;backdrop-filter:blur(6px);}
 </style>
 </head>
@@ -302,9 +334,15 @@ body{background:#000005;color:var(--text);font-family:-apple-system,'Apple SD Go
     </div>
   </div>
 
-  <!-- 이슈 탭 -->
+  <!-- 이슈 탭 — Claude API 자동 업데이트 -->
   <div class="tab-panel" id="tab-news">
-    <div id="news-panel"></div>
+    <div class="ln-refresh">
+      <span class="ln-status" id="ln-status">최신 뉴스를 불러옵니다...</span>
+      <button class="ln-refresh-btn" id="ln-refresh-btn" onclick="fetchLiveNews()">🔄 새로고침</button>
+    </div>
+    <div id="live-news-panel">
+      <div class="ln-loading"><div class="spin"></div><br>AI가 최신 지정학 뉴스를 분석 중...</div>
+    </div>
   </div>
 
   <!-- 국가 정보 탭 -->
@@ -1765,22 +1803,107 @@ COUNTRIES.forEach(c=>{
   el.addEventListener("click",()=>selectCountry(c));
   document.getElementById("country-list").appendChild(el);
 });
-NEWS.forEach(n=>{
-  const el=document.createElement("div");
-  el.className="news-item";
-  el.innerHTML=`<div class="news-date"><span>${n.date}</span><span class="news-badge ${n.badge}">${n.badgeText}</span></div><div class="news-title">${n.title}</div><div class="news-body">${n.body}</div><div class="news-impact">📌 ${n.impact}</div>`;
-  document.getElementById("news-panel").appendChild(el);
-});
+// ── LIVE NEWS (Claude API 자동 업데이트) ──
+const BADGE_MAP={
+  "지정학":"geo","전쟁":"war","분쟁":"war","무역":"eco","경제":"eco",
+  "통화":"eco","금리":"eco","자원":"res","에너지":"res","광물":"res","외교":"geo"
+};
+function getBadgeClass(cat){
+  for(const [k,v] of Object.entries(BADGE_MAP)){if(cat.includes(k))return v;}
+  return "geo";
+}
 
-// ── TABS ──
+let newsLastFetched=null;
+let newsCache=null;
+
+async function fetchLiveNews(){
+  const panel=document.getElementById("live-news-panel");
+  const btn=document.getElementById("ln-refresh-btn");
+  const status=document.getElementById("ln-status");
+
+  // 브라우저 5분 캐시 (서버는 12시간 캐시로 별도 관리)
+  if(newsCache&&newsLastFetched&&(Date.now()-newsLastFetched)<300000){
+    renderNews(newsCache.items||newsCache);
+    if(newsCache.fetchedAtKr) status.textContent=`${newsCache.fetchedAtKr} 기준`;
+    return;
+  }
+
+  btn.disabled=true;
+  btn.textContent="불러오는 중...";
+  status.textContent="분석 중...";
+  panel.innerHTML='<div class="ln-loading"><div class="spin"></div><br>최신 지정학 뉴스 분석 중...</div>';
+
+  try{
+    const res=await fetch("/api/news");
+    if(!res.ok) throw new Error(`서버 오류 ${res.status}`);
+    const data=await res.json();
+    if(!data.items||!data.items.length) throw new Error("데이터 없음");
+
+    newsCache=data;
+    newsLastFetched=Date.now();
+    renderNews(data.items);
+
+    // 서버에서 받은 한국시간 기준 업데이트 정보 표시
+    if(data.fetchedAtKr && data.nextUpdateKr){
+      status.textContent=`${data.fetchedAtKr} 기준 · 다음: ${data.nextUpdateKr}`;
+    } else {
+      const d=new Date(newsLastFetched);
+      status.textContent=`${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")} 업데이트`;
+    }
+
+  }catch(e){
+    console.warn("Live news fetch failed, using fallback:", e.message);
+    renderNews(NEWS_FALLBACK);
+    status.textContent="오프라인 데이터 (12시간 주기 업데이트)";
+  }finally{
+    btn.disabled=false;
+    btn.textContent="🔄 새로고침";
+  }
+}
+
+function renderNews(items){
+  const panel=document.getElementById("live-news-panel");
+  panel.innerHTML="";
+  items.forEach(n=>{
+    const cat=n.category||n.badgeText||"지정학";
+    const bCls=getBadgeClass(cat);
+    const el=document.createElement("div");
+    el.className="ln-item";
+    el.innerHTML=`
+      <div class="ln-date"><span>${n.date||""}</span><span class="ln-badge ${bCls}">${cat}</span></div>
+      <div class="ln-title">${n.title||""}</div>
+      <div class="ln-body">${n.body||""}</div>
+      ${n.impact?`<div class="ln-impact">📌 ${n.impact}</div>`:""}
+    `;
+    panel.appendChild(el);
+  });
+}
+
+const NEWS_FALLBACK=[
+  {date:"2026.04.09",category:"전쟁",title:"호르무즈 해협 봉쇄 지속",body:"이란 봉쇄로 글로벌 원유 공급 20% 차단. 브렌트유 110달러. IEA 사상 최대 공급 충격 경고.",impact:"에너지 수입국(한·일·EU) 무역수지 악화"},
+  {date:"2026.04.09",category:"무역",title:"미중 정상회담 5월 예정",body:"트럼프-시진핑 베이징 회담. 반도체·희토류 협상 핵심 의제. IEEPA 위헌 후 중국 협상력 강화.",impact:"결과에 따라 반도체·희토류 공급망 전체 재편"},
+  {date:"2026.04.09",category:"무역",title:"Section 301 공청회 4/28",body:"USTR 16개국 과잉생산 조사. 한국·일본·대만·EU 포함. 새 관세 가능성 높음.",impact:"한국 반도체·자동차·배터리 직접 영향권"},
+  {date:"2026.04.09",category:"금리",title:"Fed 동결·파월 임기 만료",body:"3월 FOMC 동결. PCE 2.7%. 파월 5월 임기 만료. 신임 의장 성향이 하반기 통화정책 결정.",impact:"도비쉬 의장 임명 시 달러 약세·금 강세"},
+  {date:"2026.04.09",category:"지정학",title:"트럼프 이란 최후통첩",body:"합의 없으면 존재 소멸 발언. F-15E 격추·IRGC 정보국장 사살. 영국 41개국 긴급회의.",impact:"분쟁 장기화 시 유가 120달러+ 시나리오"},
+  {date:"2026.04.09",category:"에너지",title:"원유 110달러·인플레 압박",body:"호르무즈 봉쇄로 에너지 급등. OPEC+ 증산 검토.",impact:"인플레 재점화 → 금리 인하 후퇴 → 성장주 압박"},
+  {date:"2026.04.09",category:"지정학",title:"러-우크라 휴전 협상 징후",body:"트럼프 중재로 영토 동결 방식 협상 가능성. 우크라이나 탄도미사일 개발 임박.",impact:"휴전 합의 시 유럽 재건 인프라·철강株 급등"},
+  {date:"2026.04.09",category:"금리",title:"PBoC 동결·위안화 약세",body:"인민은행 LPR 3.0% 10개월 연속 동결. 위안화 절하 압력 지속.",impact:"중국 부양책 한계. 소비재·부동산株 약세"}
+];
+
+// 탭 전환
 document.querySelectorAll(".tab").forEach(tab=>{
   tab.addEventListener("click",()=>{
     document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
     document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
     tab.classList.add("active");
     document.getElementById("tab-"+tab.dataset.tab).classList.add("active");
+    if(tab.dataset.tab==="news") fetchLiveNews();
   });
 });
+
+// 초기: 폴백 즉시 표시
+setTimeout(()=>renderNews(NEWS_FALLBACK), 200);
+
 
 // ── COMBINED FILTER ──
 document.querySelectorAll(".f-btn[data-layer]").forEach(btn=>{
