@@ -204,9 +204,12 @@ body{background:#000005;color:var(--text);font-family:-apple-system,'Apple SD Go
 /* ── MOBILE RESPONSIVE ── */
 @media(max-width:768px){
   body{flex-direction:column;}
-  #brand-bar{padding:0 10px;gap:6px;height:40px;min-height:40px;}
+  #brand-bar{padding:0 10px;gap:7px;height:40px;min-height:40px;}
   #brand-logo{font-size:10px;}
-  .bl{font-size:9.5px;padding:4px 8px;gap:4px;}
+  #brand-logo img{width:18px;height:18px;}
+  /* 모바일: 링크 텍스트 숨기고 아이콘+테두리만 표시 */
+  .bl{padding:5px 8px;gap:0;font-size:0;border-radius:7px;min-width:32px;justify-content:center;}
+  .bl svg{width:14px;height:14px;flex-shrink:0;}
   #main-layout{flex-direction:column;flex:1;}
   #sidebar{width:100%;min-width:0;height:auto;max-height:44vh;flex-direction:column;border-right:none;border-bottom:1px solid var(--border2);}
   #globe-wrap{flex:1;min-height:56vw;}
@@ -223,9 +226,11 @@ body{background:#000005;color:var(--text);font-family:-apple-system,'Apple SD Go
   #conn-popup{width:calc(100vw - 20px);max-width:340px;}
 }
 @media(max-width:480px){
-  .brand-links{gap:4px;}
-  .bl{padding:3px 7px;font-size:9px;}
+  .brand-links{gap:5px;}
+  .bl{min-width:30px;padding:5px 7px;}
+  .bl svg{width:13px;height:13px;}
   #brand-logo{font-size:9px;}
+  #brand-logo img{width:16px;height:16px;}
   #sidebar{max-height:40vh;}
   .econ-grid{grid-template-columns:1fr 1fr;}
 }
