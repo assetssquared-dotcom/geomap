@@ -191,9 +191,10 @@ body{background:#000005;color:var(--text);font-family:-apple-system,'Apple SD Go
 .cp-sec-label.green{color:var(--green);}
 .cp-sec-label.yellow{color:var(--yellow);}
 .cp-sec-label.red{color:var(--red);}
-.cp-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
-.cp-row-label{font-size:9.5px;color:var(--muted);}
-.cp-row-val{font-size:10px;font-weight:600;color:var(--text);text-align:right;max-width:60%;}
+.cp-row{display:grid;grid-template-columns:80px 1fr;gap:6px;align-items:baseline;margin-bottom:5px;}
+.cp-row-label{font-size:9px;color:var(--muted);white-space:nowrap;}
+.cp-row-val{font-size:10px;font-weight:600;color:var(--text);text-align:left;word-break:keep-all;line-height:1.5;}
+.cp-watch{font-size:9.5px;color:var(--yellow);line-height:1.6;word-break:keep-all;}
 .cp-note{font-size:9.5px;color:#bbb;line-height:1.6;}
 .cp-watch{font-size:9.5px;color:var(--yellow);}
 
@@ -1983,6 +1984,18 @@ async function fetchCountryUpdates() {
         if (u[field] !== undefined) c[field] = u[field];
       });
     });
+
+    // 연결선 관계 데이터도 업데이트 (note, watch, keyItems)
+    if (data.connections) {
+      CONNECTIONS.forEach(conn => {
+        const key = `${conn.from}-${conn.to}`;
+        const u = data.connections[key];
+        if (!u || !conn.rel) return;
+        if (u.note) conn.rel.note = u.note;
+        if (u.watch) conn.rel.watch = u.watch;
+        if (u.keyItems) conn.rel.keyItems = u.keyItems;
+      });
+    }
 
     // 이미 열린 국가 패널 있으면 새로고침 표시
     const openCountry = document.querySelector(".country-item.active");
