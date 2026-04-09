@@ -11,8 +11,8 @@
   --bg:#000000;--surface:rgba(10,10,10,0.97);--surface2:rgba(18,18,18,0.98);
   --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.15);--border3:rgba(255,255,255,0.08);
   --text:#f2f2f2;--muted:#b0b0b0;--muted2:#888;
-  --us:#00b4a0;--cn:#f03030;--swing:#f0b800;--neutral:#1db954;
-  --geo:#ff7700;--res:#1db954;--ind:#00b4a0;--risk:#f03030;
+  --us:#1a3a8f;--cn:#f03030;--swing:#f0b800;--neutral:#1db954;
+  --geo:#ff7700;--res:#1db954;--ind:#1a3a8f;--risk:#f03030;
   --green:#43e897;--red:#ff4b6e;--yellow:#ffd060;--blue:#ffffff;--purple:#c084fc;
   --sidebar:285px;
 }
@@ -1798,9 +1798,9 @@ const NEWS=[
 })();
 
 // 레이어별 마커 색상 (흰색 제거 — industry를 하늘색으로)
-const LAYER_COLORS={geopolitics:"#ff7700",resources:"#1db954",industry:"#00b4a0",risk:"#f03030"};
+const LAYER_COLORS={geopolitics:"#ff7700",resources:"#1db954",industry:"#1a3a8f",risk:"#f03030"};
 // 진영별 마커 색상 (흰색 제거 — 친미를 하늘색으로)
-const ALIGN_C={us:"#00b4a0",cn:"#f03030",swing:"#f0b800",neutral:"#1db954"};
+const ALIGN_C={us:"#1a3a8f",cn:"#f03030",swing:"#f0b800",neutral:"#1db954"};
 const ALIGN_BG={us:"rgba(56,190,255,.14)",cn:"rgba(255,75,110,.14)",swing:"rgba(255,208,96,.14)",neutral:"rgba(127,255,154,.14)"};
 const ALIGN_N={us:"친미",cn:"친중",swing:"스윙",neutral:"중립"};
 
@@ -2449,8 +2449,8 @@ function showConnPopup(conn,mx,my){
 
 // ── CONNECTIONS ──
 let connEls={},activeConnKey=null;
-const connColors={us:"rgba(0,180,160,0.90)",cn:"rgba(240,48,48,0.93)",swing:"rgba(240,184,0,0.88)",
-  ally:"rgba(0,180,160,0.90)",rival:"rgba(240,48,48,0.95)",tension:"rgba(255,119,0,0.90)",
+const connColors={us:"rgba(26,58,143,0.90)",cn:"rgba(240,48,48,0.93)",swing:"rgba(240,184,0,0.88)",
+  ally:"rgba(26,58,143,0.90)",rival:"rgba(240,48,48,0.95)",tension:"rgba(255,119,0,0.90)",
   trade:"rgba(29,185,84,0.87)",compete:"rgba(160,68,255,0.87)"};
 const connWidths={us:2.0,cn:2.0,swing:1.4,ally:2.0,rival:2.6,tension:1.9,trade:1.6,compete:1.4};
 const connDash={us:"none",cn:"none",swing:"6,4",ally:"none",rival:"3,3",tension:"8,4",trade:"none",compete:"4,4"};
