@@ -1727,7 +1727,7 @@ const NEWS=[
     canvas.width=window.innerWidth;
     canvas.height=window.innerHeight;
     stars=[];
-    for(let i=0;i<1200;i++){
+    for(let i=0;i<3500;i++){
       const bright=i<60; // 60개는 밝고 큰 별
       stars.push({
         x:rand(0,canvas.width),y:rand(0,canvas.height),
@@ -2569,7 +2569,7 @@ function rotateTo(lng,lat){
   const s=projection.rotate(),e=[-lng,Math.max(-80,Math.min(80,-lat)),0],ip=d3.interpolate(s,e);
   d3.transition().duration(900).tween("rotate",()=>t=>{projection.rotate(ip(t));render();});
 }
-setInterval(()=>{if(!autoRotate||dragging)return;const r=projection.rotate();projection.rotate([r[0]+0.05,r[1],r[2]]);render();},50);
+setInterval(()=>{if(!autoRotate||dragging)return;const r=projection.rotate();projection.rotate([r[0]+0.11,r[1],r[2]]);render();},50);
 window.addEventListener("resize",()=>{W=wrap.clientWidth;H=wrap.clientHeight;projection.translate([W/2,H/2]);globeSphere.attr("cx",W/2).attr("cy",H/2);render();});
 </script>
 </body>
