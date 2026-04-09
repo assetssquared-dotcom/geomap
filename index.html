@@ -2569,7 +2569,7 @@ function rotateTo(lng,lat){
   const s=projection.rotate(),e=[-lng,Math.max(-80,Math.min(80,-lat)),0],ip=d3.interpolate(s,e);
   d3.transition().duration(900).tween("rotate",()=>t=>{projection.rotate(ip(t));render();});
 }
-setInterval(()=>{if(!autoRotate||dragging)return;const r=projection.rotate();projection.rotate([r[0]+0.11,r[1],r[2]]);render();},50);
+setInterval(()=>{if(!autoRotate||dragging)return;const r=projection.rotate();projection.rotate([r[0]+0.08,r[1],r[2]]);render();},50);
 window.addEventListener("resize",()=>{W=wrap.clientWidth;H=wrap.clientHeight;projection.translate([W/2,H/2]);globeSphere.attr("cx",W/2).attr("cy",H/2);render();});
 </script>
 </body>
