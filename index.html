@@ -228,7 +228,13 @@ body{background:#000005;color:var(--text);font-family:-apple-system,'Apple SD Go
   #sidebar{max-height:40vh;}
   .econ-grid{grid-template-columns:1fr 1fr;}
 }
-/* ── 자원 섹션 ── */
+/* ── 국가 오늘의 변동 배지 ── */
+.update-badge{display:inline-flex;align-items:center;gap:4px;font-size:8.5px;font-weight:700;padding:2px 7px;border-radius:4px;margin-bottom:8px;}
+.update-badge.positive{background:rgba(67,232,151,.15);color:#43e897;border:1px solid rgba(67,232,151,.25);}
+.update-badge.negative{background:rgba(255,75,110,.15);color:#ff4b6e;border:1px solid rgba(255,75,110,.25);}
+.update-badge.neutral{background:rgba(56,190,255,.12);color:#38beff;border:1px solid rgba(56,190,255,.2);}
+.update-detail{font-size:10px;color:var(--muted);line-height:1.55;padding:6px 9px;background:rgba(8,12,26,.7);border-radius:5px;border-left:2px solid rgba(56,190,255,.3);margin-bottom:4px;}
+.update-date{font-size:8.5px;color:var(--muted2);margin-bottom:6px;}
 .res-item{background:rgba(8,12,26,0.7);border-radius:6px;padding:8px 10px;margin-bottom:6px;border:1px solid var(--border3);}
 .res-name{font-size:10.5px;font-weight:700;color:var(--green);margin-bottom:4px;}
 .res-why{font-size:10px;color:var(--muted);line-height:1.58;margin-bottom:4px;}
@@ -1933,6 +1939,51 @@ document.querySelectorAll(".f-btn[data-align]").forEach(btn=>{
     updateConnVisibility();
   });
 });
+// ── 국가 데이터 하루 1회 자동 업데이트 ──
+// 금리·정책·요약·watchlist·risk 등 동적 필드를 서버에서 재생성해 덮어씌움
+// 지도 좌표·이름·국기 등 정적 필드는 index.html 하드코딩 유지
+
+let countryUpdatesDate = null;
+
+async function fetchCountryUpdates() {
+  try {
+    const res = await fetch("/api/country-updates");
+    if (!res.ok) throw new Error(`서버 오류 ${res.status}`);
+    const data = await res.json();
+    if (!data.updates) return;
+
+    countryUpdatesDate = data.fetchedAtKr || "";
+
+    // COUNTRIES 배열의 동적 필드만 덮어씌우기
+    const DYNAMIC_FIELDS = ["summary","keywords","geo","rate","policy","watchlist","risk"];
+    COUNTRIES.forEach(c => {
+      const u = data.updates[c.id];
+      if (!u) return;
+      DYNAMIC_FIELDS.forEach(field => {
+        if (u[field] !== undefined) c[field] = u[field];
+      });
+    });
+
+    // 이미 열린 국가 패널 있으면 새로고침 표시
+    const openCountry = document.querySelector(".country-item.active");
+    if (openCountry) {
+      const banner = document.getElementById("update-banner");
+      if (banner) {
+        banner.style.display = "flex";
+        banner.textContent = `🔄 ${countryUpdatesDate} 기준 데이터로 업데이트됨`;
+      }
+    }
+
+    console.log(`[자산제곱] 국가 데이터 업데이트 완료: ${countryUpdatesDate}`);
+  } catch (e) {
+    console.warn("Country updates fetch failed (using static data):", e.message);
+  }
+}
+
+// 페이지 로드 후 백그라운드에서 조용히 가져오기
+// 로드 완료 후 2초 뒤 실행 (지구본 초기화 우선)
+window.addEventListener("load", () => setTimeout(fetchCountryUpdates, 2000));
+
 // ── COUNTRY STATS (경제·사회 심층 데이터) ──
 const STATS={
   us:{gdp:"$27.4조",gdpGrowth:"+2.4%",population:"3.4억",inflation:"2.7%",debt:"GDP 124%",currency:"달러(USD)",exports:"$3.0조",mainPartner:"캐나다·멕시코·중국",stockIndex:"S&P500 5,200",
@@ -2198,6 +2249,8 @@ function selectCountry(c){
     </div>
 
     <div class="d-summary">${c.summary}</div>
+    ${countryUpdatesDate ? `<div id="update-banner" style="display:none;padding:5px 13px;font-size:9px;color:var(--blue);background:rgba(56,190,255,.07);border-bottom:1px solid var(--border2);align-items:center;gap:4px;"></div>
+    <div style="padding:4px 13px 0;font-size:8.5px;color:var(--muted2);">🔄 ${countryUpdatesDate} 기준 업데이트</div>` : ''}
 
     <!-- 핵심 키워드 -->
     <div class="d-section">
