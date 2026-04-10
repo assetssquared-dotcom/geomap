@@ -9,8 +9,9 @@
 <meta property="og:type" content="website"/>
 <meta property="og:url" content="https://assetx2-geomap.vercel.app"/>
 <meta property="og:image" content="https://raw.githubusercontent.com/assetssquared-dotcom/geomap/main/%EC%9E%90%EC%82%B0%EC%A0%9C%EA%B3%B1_%EB%A1%9C%EA%B3%A0.png"/>
-<meta property="og:image:width" content="1200"/>
-<meta property="og:image:height" content="630"/>
+<meta property="og:image:type" content="image/png"/>
+<meta property="og:image:width" content="600"/>
+<meta property="og:image:height" content="600"/>
 <meta property="og:site_name" content="자산제곱 GEO MAP"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="자산제곱 지정학 분석 지도"/>
@@ -91,7 +92,13 @@ body{background:#000005;color:var(--text);font-family:-apple-system,'Apple SD Go
 .f-btn[data-align="swing"]{border-color:rgba(255,208,96,.3);color:var(--swing);}
 .f-btn[data-align="swing"].active{background:rgba(255,208,96,.08);}
 
-#country-section{padding:0 10px 8px;flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+/* ── 스크롤 인디케이터 ── */
+#country-section{padding:0 10px 8px;overflow-y:auto;height:100%;scrollbar-width:none;}
+#country-section::-webkit-scrollbar{display:none;}
+#scroll-fade{position:absolute;bottom:0;left:0;right:8px;height:40px;background:linear-gradient(transparent,rgba(8,8,8,0.95));pointer-events:none;transition:opacity .3s;}
+#scroll-track{position:absolute;top:4px;right:2px;bottom:4px;width:3px;background:rgba(255,255,255,0.06);border-radius:2px;}
+#scroll-thumb{position:absolute;right:0;width:3px;background:rgba(255,255,255,0.28);border-radius:2px;transition:opacity .2s;cursor:pointer;}
+#scroll-track:hover #scroll-thumb{background:rgba(255,255,255,0.5);width:5px;right:-1px;}
 .country-item{display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:6px;cursor:pointer;transition:background .12s;margin-bottom:1px;}
 .country-item:hover,.country-item.active{background:rgba(255,255,255,.05);}
 .country-flag{font-size:15px;flex-shrink:0;}
@@ -229,6 +236,7 @@ body{background:#000005;color:var(--text);font-family:-apple-system,'Apple SD Go
   #filter-section{padding:7px 10px 5px;}
   .f-chips{gap:3px;}
   .f-btn{font-size:9px;padding:3px 7px;}
+  #country-section-wrap{flex:1;overflow:hidden;}
   #country-section{flex:1;overflow-y:auto;}
   #legend{bottom:8px;left:8px;padding:6px 9px;}
   .leg-title{font-size:7.5px;margin-bottom:4px;}
@@ -353,9 +361,15 @@ body{background:#000005;color:var(--text);font-family:-apple-system,'Apple SD Go
         </div>
       </div>
     </div>
-    <div id="country-section">
-      <div class="sec-label" style="padding:5px 0 4px;">국가 목록</div>
-      <div id="country-list"></div>
+    <div id="country-section-wrap" style="flex:1;overflow:hidden;position:relative;">
+      <div id="country-section">
+        <div class="sec-label" style="padding:5px 0 4px;">국가 목록</div>
+        <div id="country-list"></div>
+      </div>
+      <!-- 하단 페이드 — 스크롤 가능 표시 -->
+      <div id="scroll-fade"></div>
+      <!-- 커스텀 스크롤바 -->
+      <div id="scroll-track"><div id="scroll-thumb"></div></div>
     </div>
   </div>
 
@@ -2016,6 +2030,39 @@ async function fetchCountryUpdates() {
 // 페이지 로드 후 백그라운드에서 조용히 가져오기
 // 로드 완료 후 2초 뒤 실행 (지구본 초기화 우선)
 window.addEventListener("load", () => setTimeout(fetchCountryUpdates, 2000));
+
+// ── 스크롤 인디케이터 ──
+(function(){
+  const sec = document.getElementById("country-section");
+  const thumb = document.getElementById("scroll-thumb");
+  const track = document.getElementById("scroll-track");
+  const fade = document.getElementById("scroll-fade");
+  if(!sec||!thumb||!track||!fade) return;
+
+  function updateScroll(){
+    const {scrollTop, scrollHeight, clientHeight} = sec;
+    const ratio = clientHeight / scrollHeight;
+    const thumbH = Math.max(30, track.clientHeight * ratio);
+    const maxTop = track.clientHeight - thumbH;
+    const top = (scrollTop / (scrollHeight - clientHeight)) * maxTop;
+    thumb.style.height = thumbH + "px";
+    thumb.style.top = (isNaN(top)?0:top) + "px";
+    // 하단 페이드: 끝에 도달하면 숨김
+    const atBottom = scrollTop + clientHeight >= scrollHeight - 4;
+    fade.style.opacity = atBottom ? "0" : "1";
+    // 스크롤바: 스크롤 가능할 때만 표시
+    track.style.opacity = ratio >= 1 ? "0" : "1";
+  }
+
+  sec.addEventListener("scroll", updateScroll);
+  // 국가 목록 렌더 후 업데이트
+  setTimeout(updateScroll, 300);
+  window.addEventListener("resize", updateScroll);
+  // 탭 전환 시에도 업데이트
+  document.querySelectorAll(".tab").forEach(t =>
+    t.addEventListener("click", () => setTimeout(updateScroll, 50))
+  );
+})();
 
 // ── COUNTRY STATS (경제·사회 심층 데이터) ──
 const STATS={
