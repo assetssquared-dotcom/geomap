@@ -2648,7 +2648,7 @@ function render(){
 
 buildConns();buildMarkers();updateMarkers();render();
 
-let dragging=false,lastPos=null,autoRotate=true;
+let dragging=false,lastPos=null,autoRotate=true,viewMode="normal";
 svg.on("mousedown",e=>{dragging=true;lastPos=[e.clientX,e.clientY];autoRotate=false;document.getElementById("hint").style.opacity="0";})
    .on("mousemove",e=>{if(!dragging||!lastPos)return;const r=projection.rotate();projection.rotate([r[0]+(e.clientX-lastPos[0])*.3,Math.max(-80,Math.min(80,r[1]-(e.clientY-lastPos[1])*.3)),r[2]]);lastPos=[e.clientX,e.clientY];render();})
    .on("mouseup",()=>{dragging=false;lastPos=null;}).on("mouseleave",()=>{dragging=false;lastPos=null;});
