@@ -1,4 +1,4 @@
-// country-updates.js — KV에서 읽기만 함. Claude 호출 없음.
+// news.js — KV에서 읽기만 함. Claude 호출 없음.
 // 실제 업데이트는 cron-update.js (매일 KST 09:00) 가 담당
 
 export default async function handler(req, res) {
@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const kvRes = await fetch(`${kvUrl}/get/geomap:country-data:v3`, {
+    const kvRes = await fetch(`${kvUrl}/get/geomap:news:v1`, {
       headers: { Authorization: `Bearer ${kvToken}` }
     });
     const kvData = await kvRes.json();
@@ -22,7 +22,8 @@ export default async function handler(req, res) {
       res.setHeader("Cache-Control", "public, s-maxage=3600");
       return res.status(200).json(JSON.parse(kvData.result));
     }
-    return res.status(200).json({ updates: {}, fetchedAtKr: "업데이트 준비 중 (매일 오전 9시 갱신)", source: "pending" });
+    // KV에 데이터 없으면 아직 cron이 한 번도 안 돌았음
+    return res.status(200).json({ items: [], fetchedAtKr: "업데이트 준비 중 (매일 오전 9시 갱신)", source: "pending" });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }

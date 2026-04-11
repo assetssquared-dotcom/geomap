@@ -2,6 +2,13 @@
   "rewrites": [
     { "source": "/api/news", "destination": "/news.js" },
     { "source": "/api/country-updates", "destination": "/country-updates.js" },
+    { "source": "/api/cron-update", "destination": "/cron-update.js" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron-update",
+      "schedule": "0 0 * * *"
+    }
   ]
 }
