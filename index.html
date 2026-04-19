@@ -244,7 +244,8 @@ body{background:#000005;color:var(--text);font-family:-apple-system,'Apple SD Go
   #globe-controls{bottom:8px;right:8px;}
   .globe-btn{width:26px;height:26px;font-size:12px;}
   #hint{display:none;}
-  #conn-popup{width:calc(100vw - 20px);max-width:340px;}
+  #conn-popup{width:calc(100vw - 20px);max-width:100%;position:fixed;left:10px;right:10px;bottom:10px;top:auto;}
+  .cp-body{max-height:50vh;}
 }
 @media(max-width:480px){
   .brand-links{gap:5px;}
@@ -2029,7 +2030,8 @@ async function fetchCountryUpdates() {
 
 // 페이지 로드 후 백그라운드에서 조용히 가져오기
 // 로드 완료 후 2초 뒤 실행 (지구본 초기화 우선)
-window.addEventListener("load", () => setTimeout(fetchCountryUpdates, 2000));
+// 국가 업데이트 자동 호출 비활성화 (KV 캐시 미작동 시 비용 과다 방지)
+// window.addEventListener("load", () => setTimeout(fetchCountryUpdates, 2000));
 
 // ── 스크롤 인디케이터 ──
 (function(){
@@ -2520,10 +2522,31 @@ function showConnPopup(conn,mx,my){
     <div><div class="cp-sec-label yellow">📝 관계 요약</div><div class="cp-note">${r.note}</div></div>
     <div><div class="cp-sec-label red">👁️ 투자 시사점</div><div class="cp-watch">📌 ${r.watch}</div></div>`;
   const rect=wrap.getBoundingClientRect();
-  let px=mx-rect.left+16,py=my-rect.top-10;
-  if(px+315>rect.width)px=mx-rect.left-320;
-  if(py+420>rect.height)py=Math.max(10,rect.height-430);
-  cpPopup.style.left=px+"px";cpPopup.style.top=py+"px";
+  const popW=308, popH=420;
+  const isMobile=rect.width<500;
+
+  if(isMobile){
+    // 모바일: 화면 하단 중앙에 고정
+    cpPopup.style.left="10px";
+    cpPopup.style.right="10px";
+    cpPopup.style.width="auto";
+    cpPopup.style.top="auto";
+    cpPopup.style.bottom="10px";
+    cpPopup.style.position="fixed";
+  } else {
+    // 데스크탑: 클릭 위치 기준, 화면 밖으로 안 나가게
+    cpPopup.style.position="absolute";
+    cpPopup.style.right="";
+    cpPopup.style.bottom="";
+    cpPopup.style.width=popW+"px";
+    let px=mx-rect.left+16, py=my-rect.top-10;
+    if(px+popW>rect.width) px=mx-rect.left-popW-8;
+    if(px<0) px=8;
+    if(py+popH>rect.height) py=Math.max(8, rect.height-popH-8);
+    if(py<0) py=8;
+    cpPopup.style.left=px+"px";
+    cpPopup.style.top=py+"px";
+  }
   cpPopup.classList.add("show");
 }
 
