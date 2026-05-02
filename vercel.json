@@ -1,8 +1,8 @@
 {
   "rewrites": [
-    { "source": "/api/news", "destination": "/news.js" },
-    { "source": "/api/country-updates", "destination": "/country-updates.js" },
-    { "source": "/api/cron-update", "destination": "/cron-update.js" },
+    { "source": "/api/news", "destination": "/api/news.js" },
+    { "source": "/api/country-updates", "destination": "/api/country-updates.js" },
+    { "source": "/api/cron-update", "destination": "/api/cron-update.js" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "crons": [
