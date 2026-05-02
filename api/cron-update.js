@@ -9,11 +9,10 @@ export default async function handler(req, res) {
   const today = new Date().toLocaleDateString("ko-KR", {
     year: "numeric", month: "long", day: "numeric"
   });
-
   const dateStr = today.replace("년 ",".").replace("월 ",".").replace("일","").trim();
 
   try {
-    // 뉴스만 생성 (빠르고 확실)
+    // Claude Haiku 호출
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -37,20 +36,22 @@ export default async function handler(req, res) {
     const raw = d.content[0].text.trim().replace(/```json\n?|\n?```/g,"").trim();
     const items = JSON.parse(raw);
 
-    // KV 저장
-    await fetch(`${kvUrl}/set/geomap:news:v1`, {
+    const payload = {
+      items,
+      fetchedAt: new Date().toISOString(),
+      fetchedAtKr: `${today} 오전 9시`,
+      nextUpdateKr: "내일 오전 9시",
+      source: "cron"
+    };
+
+    // KV에 직접 JSON 저장 (SET 명령어 사용)
+    const kvRes = await fetch(`${kvUrl}/set/geomap:news:v1`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${kvToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        value: JSON.stringify({
-          items,
-          fetchedAt: new Date().toISOString(),
-          fetchedAtKr: `${today} 오전 9시`,
-          nextUpdateKr: "내일 오전 9시",
-          source: "cron"
-        }),
-        ex: 90000
-      })
+      headers: {
+        Authorization: `Bearer ${kvToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify([JSON.stringify(payload), "EX", "90000"])
     });
 
     return res.status(200).json({ success: true, date: today, news: items.length });
