@@ -14,13 +14,13 @@ export default async function handler(req, res) {
     const d = await r.json();
 
     if (d.result) {
+      // result가 문자열이면 파싱
       let data = d.result;
-      // 중첩 JSON 문자열 처리
       if (typeof data === "string") data = JSON.parse(data);
-      if (typeof data === "string") data = JSON.parse(data);
-      if (data.value) {
-        data = typeof data.value === "string" ? JSON.parse(data.value) : data.value;
-      }
+      // 배열이면 첫 번째 요소 사용
+      if (Array.isArray(data)) data = typeof data[0] === "string" ? JSON.parse(data[0]) : data[0];
+      // value 키가 있으면 그 안의 데이터 사용
+      if (data && data.value) data = typeof data.value === "string" ? JSON.parse(data.value) : data.value;
       return res.status(200).json(data);
     }
 
