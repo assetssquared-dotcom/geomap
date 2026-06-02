@@ -45,7 +45,7 @@ export default async function handler(req, res) {
   try {
     // 1. 뉴스 (웹 검색)
     const newsItems = await callSonnet(
-      `웹 검색으로 오늘(${today}) 실제 최신 지정학·경제 뉴스 확인 후 8개를 JSON으로만:\n[{"date":"${dateStr}","category":"지정학|전쟁|무역|에너지|금리|외교|자원","title":"15자 이내","body":"2문장(실제수치포함)","impact":"시사점 1문장"}]\nJSON만.`,
+      `웹 검색으로 오늘(${today}) 실제 최신 지정학·경제 뉴스 기사 8개를 찾아서 JSON으로만:\n[{"date":"${dateStr}","category":"지정학|전쟁|무역|에너지|금리|외교|자원","title":"15자 이내","body":"2문장(실제수치포함)","impact":"시사점 1문장","url":"실제 기사 URL (https://로 시작, 없으면 빈 문자열)"}]\n반드시 실제 존재하는 기사의 URL을 포함하세요. JSON만.`,
       true
     );
     await kvSave("geomap:news:v1", {
