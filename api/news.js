@@ -1,30 +1,29 @@
-// api/news.js — KV에서 읽기만 함
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.method === "OPTIONS") return res.status(200).end();
-
   const kvUrl = process.env.KV_REST_API_URL;
   const kvToken = process.env.KV_REST_API_TOKEN;
   if (!kvUrl || !kvToken) return res.status(500).json({ error: "KV not configured" });
-
   try {
     const r = await fetch(`${kvUrl}/get/geomap:news:v1`, {
       headers: { Authorization: `Bearer ${kvToken}` }
     });
     const d = await r.json();
+    if (!d.result) return res.status(200).json({ items: [], source: "pending" });
 
-    if (d.result) {
-      // result가 문자열이면 파싱
-      let data = d.result;
-      if (typeof data === "string") data = JSON.parse(data);
-      // 배열이면 첫 번째 요소 사용
-      if (Array.isArray(data)) data = typeof data[0] === "string" ? JSON.parse(data[0]) : data[0];
-      // value 키가 있으면 그 안의 데이터 사용
-      if (data && data.value) data = typeof data.value === "string" ? JSON.parse(data.value) : data.value;
-      return res.status(200).json(data);
+    // 중첩 JSON 완전 처리
+    let data = d.result;
+    while (typeof data === "string") {
+      try { data = JSON.parse(data); } catch { break; }
     }
-
-    return res.status(200).json({ items: [], fetchedAtKr: "매일 오전 9시 자동 업데이트", source: "pending" });
+    if (Array.isArray(data)) {
+      const first = data[0];
+      data = typeof first === "string" ? JSON.parse(first) : first;
+    }
+    if (data && data.value) {
+      data = typeof data.value === "string" ? JSON.parse(data.value) : data.value;
+    }
+    return res.status(200).json(data);
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
