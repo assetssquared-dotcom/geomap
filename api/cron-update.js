@@ -12,6 +12,7 @@ export default async function handler(req, res) {
   const dateStr = today.replace("년 ",".").replace("월 ",".").replace("일","").trim();
 
   try {
+    // Claude 호출
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -35,25 +36,39 @@ export default async function handler(req, res) {
     const raw = d.content[0].text.trim().replace(/```json\n?|\n?```/g,"").trim();
     const items = JSON.parse(raw);
 
-    const payload = JSON.stringify({
+    const payload = {
       items,
       fetchedAt: new Date().toISOString(),
       fetchedAtKr: `${today} 오전 9시`,
       nextUpdateKr: "내일 오전 9시",
       source: "cron"
+    };
+
+    // Upstash REST API — 올바른 방식으로 저장
+    // 먼저 기존 키 삭제
+    await fetch(`${kvUrl}/del/geomap:news:v1`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${kvToken}` }
     });
 
-    // Upstash REST API 올바른 SET 방식
-    await fetch(`${kvUrl}/set/geomap:news:v1/ex/90000`, {
+    // 새로 저장 (단순 문자열로)
+    const setRes = await fetch(`${kvUrl}/set/geomap:news:v1`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${kvToken}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload)  // 객체 직접 전달
     });
 
-    return res.status(200).json({ success: true, date: today, news: items.length });
+    const setData = await setRes.json();
+
+    return res.status(200).json({
+      success: true,
+      date: today,
+      news: items.length,
+      kvResult: setData
+    });
 
   } catch (err) {
     return res.status(500).json({ error: err.message });
