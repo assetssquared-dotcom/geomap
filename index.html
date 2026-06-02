@@ -289,6 +289,9 @@ body{background:#000005;color:var(--text);font-family:-apple-system,'Apple SD Go
 .ln-title{font-size:11px;font-weight:600;color:var(--text);line-height:1.45;margin-bottom:3px;}
 .ln-body{font-size:10px;color:#bbb;line-height:1.5;}
 .ln-impact{font-size:9.5px;color:#ffd060;margin-top:3px;}
+.ln-item-link:hover{background:rgba(56,190,255,.07);border-left:2px solid rgba(56,190,255,.4);padding-left:10px;}
+.ln-link-icon{margin-left:auto;font-size:10px;color:rgba(56,190,255,.6);font-weight:700;}
+.ln-date{display:flex;align-items:center;gap:5px;}
 .ln-refresh{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border2);flex-shrink:0;}
 .ln-refresh-btn{font-size:10px;padding:4px 10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.2);border-radius:5px;color:var(--blue);cursor:pointer;transition:all .15s;}
 .ln-refresh-btn:hover{background:rgba(255,255,255,.1);}
@@ -1909,10 +1912,20 @@ function renderNews(items){
   items.forEach(n=>{
     const cat=n.category||n.badgeText||"지정학";
     const bCls=getBadgeClass(cat);
+    const hasUrl=n.url&&n.url.startsWith("http");
     const el=document.createElement("div");
-    el.className="ln-item";
+    el.className="ln-item"+(hasUrl?" ln-item-link":"");
+    if(hasUrl){
+      el.style.cursor="pointer";
+      el.title="클릭하면 원문 기사로 이동합니다";
+      el.addEventListener("click",()=>window.open(n.url,"_blank","noopener"));
+    }
     el.innerHTML=`
-      <div class="ln-date"><span>${n.date||""}</span><span class="ln-badge ${bCls}">${cat}</span></div>
+      <div class="ln-date">
+        <span>${n.date||""}</span>
+        <span class="ln-badge ${bCls}">${cat}</span>
+        ${hasUrl?`<span class="ln-link-icon">↗</span>`:""}
+      </div>
       <div class="ln-title">${n.title||""}</div>
       <div class="ln-body">${n.body||""}</div>
       ${n.impact?`<div class="ln-impact">📌 ${n.impact}</div>`:""}
