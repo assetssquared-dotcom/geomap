@@ -5,6 +5,11 @@
     { "source": "/api/cron-update", "destination": "/api/cron-update.js" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
+  "functions": {
+    "api/cron-update.js": {
+      "maxDuration": 300
+    }
+  },
   "crons": [
     {
       "path": "/api/cron-update",
