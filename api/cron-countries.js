@@ -67,12 +67,14 @@ export default async function handler(req, res) {
   }
 
   const BATCHES = [
-    ["us","cn","jp","kr"],
-    ["de","ru","in","sa"],
-    ["tw","ir","au","br"],
-    ["cl","ua","gb","fr"],
-    ["tr","il","pk","vn"],
-    ["id","mx","pl","za"],
+    ["us","cn","jp"],
+    ["kr","de","ru"],
+    ["in","sa","tw"],
+    ["ir","au","br"],
+    ["cl","ua","gb"],
+    ["fr","tr","il"],
+    ["pk","vn","id"],
+    ["mx","pl","za"],
     ["ae"]
   ];
   const NAMES = {us:"미국",cn:"중국",jp:"일본",kr:"한국",de:"독일",ru:"러시아",in:"인도",sa:"사우디",tw:"대만",ir:"이란",au:"호주",br:"브라질",cl:"칠레",ua:"우크라이나",gb:"영국",fr:"프랑스",tr:"튀르키예",il:"이스라엘",pk:"파키스탄",vn:"베트남",id:"인도네시아",mx:"멕시코",pl:"폴란드",za:"남아공",ae:"UAE"};
@@ -86,7 +88,7 @@ export default async function handler(req, res) {
         `웹 검색으로 오늘(${today}) 아래 국가들의 최신 금리·정책·주요 이슈를 확인 후 JSON으로:\n${batch.map(id=>`${id}(${NAMES[id]||id})`).join(", ")}\n\n형식: {"국가ID":{"summary":"최신 현황 2문장","rate":{"name":"중앙은행","val":"현재 실제 금리","trend":"hawk|dove|hold","trendLabel":"기조","note":"최근 결정 배경"},"policy":[{"text":"<b>정책명</b> — 설명"},{"text":"<b>정책명</b> — 설명"}],"watchlist":[{"icon":"📌","text":"<b>이벤트</b> — 투자 시사점"}],"risk":["리스크1","리스크2"]}}\nJSON만.`,
         true,
         4000,
-        50000
+        58000
       ).then(data => ({ batch, data }))
        .catch(err => { throw { batch, err }; })
     )

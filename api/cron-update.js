@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   });
   const dateStr = today.replace("년 ",".").replace("월 ",".").replace("일","").trim();
 
-  async function callSonnet(prompt, useWebSearch = false, maxTokens = 4000, timeoutMs = 55000) {
+  async function callSonnet(prompt, useWebSearch = false, maxTokens = 4000, timeoutMs = 58000) {
     const body = {
       model: "claude-sonnet-4-6",
       max_tokens: maxTokens,
@@ -61,7 +61,7 @@ export default async function handler(req, res) {
   try {
     // 뉴스만 처리 (국가/연결선 데이터는 /api/cron-countries, /api/cron-connections 에서 별도 처리)
     const newsItems = await callSonnet(
-      `웹 검색으로 오늘(${today}) 실제 최신 지정학·경제 뉴스 기사 8개를 찾아서 JSON으로만:\n[{"date":"${dateStr}","category":"지정학|전쟁|무역|에너지|금리|외교|자원","title":"15자 이내","body":"2문장(실제수치포함)","impact":"시사점 1문장","url":"실제 기사 URL (https://로 시작, 없으면 빈 문자열)"}]\n반드시 실제 존재하는 기사의 URL을 포함하세요. JSON만.`,
+      `웹 검색으로 오늘(${today}) 실제 최신 지정학·경제 뉴스 기사 6개를 찾아서 JSON으로만:\n[{"date":"${dateStr}","category":"지정학|전쟁|무역|에너지|금리|외교|자원","title":"15자 이내","body":"2문장(실제수치포함)","impact":"시사점 1문장","url":"실제 기사 URL (https://로 시작, 없으면 빈 문자열)"}]\n반드시 실제 존재하는 기사의 URL을 포함하세요. JSON만.`,
       true
     );
     await kvSave("geomap:news:v1", {
