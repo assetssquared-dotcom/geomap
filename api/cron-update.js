@@ -82,16 +82,23 @@ export default async function handler(req, res) {
 
     const countryUpdates = {};
     const batchErrors = [];
-    for (const batch of BATCHES) {
-      try {
-        const data = await callSonnet(
+    // 배치들을 병렬로 실행 (순차 실행 시 타임아웃 위험)
+    const batchResults = await Promise.allSettled(
+      BATCHES.map(batch =>
+        callSonnet(
           `웹 검색으로 오늘(${today}) 아래 국가들의 최신 금리·정책·주요 이슈를 확인 후 JSON으로:\n${batch.map(id=>`${id}(${NAMES[id]||id})`).join(", ")}\n\n형식: {"국가ID":{"summary":"최신 현황 2문장","rate":{"name":"중앙은행","val":"현재 실제 금리","trend":"hawk|dove|hold","trendLabel":"기조","note":"최근 결정 배경"},"policy":[{"text":"<b>정책명</b> — 설명"},{"text":"<b>정책명</b> — 설명"}],"watchlist":[{"icon":"📌","text":"<b>이벤트</b> — 투자 시사점"}],"risk":["리스크1","리스크2"]}}\nJSON만.`,
           true,
           4000
-        );
-        Object.assign(countryUpdates, data);
-      } catch (batchErr) {
-        batchErrors.push(`[${batch.join(",")}] ${batchErr.message}`);
+        ).then(data => ({ batch, data })).catch(err => { throw { batch, err }; })
+      )
+    );
+    for (const r of batchResults) {
+      if (r.status === "fulfilled") {
+        Object.assign(countryUpdates, r.value.data);
+      } else {
+        const b = r.reason?.batch || [];
+        const msg = r.reason?.err?.message || r.reason?.message || "unknown error";
+        batchErrors.push(`[${b.join(",")}] ${msg}`);
       }
     }
 
