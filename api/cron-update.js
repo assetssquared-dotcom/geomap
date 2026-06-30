@@ -61,8 +61,10 @@ export default async function handler(req, res) {
   try {
     // 뉴스만 처리 (국가/연결선 데이터는 /api/cron-countries, /api/cron-connections 에서 별도 처리)
     const newsItems = await callSonnet(
-      `웹 검색으로 오늘(${today}) 실제 최신 지정학·경제 뉴스 기사 6개를 찾아서 JSON으로만:\n[{"date":"${dateStr}","category":"지정학|전쟁|무역|에너지|금리|외교|자원","title":"15자 이내","body":"2문장(실제수치포함)","impact":"시사점 1문장","url":"실제 기사 URL (https://로 시작, 없으면 빈 문자열)"}]\n반드시 실제 존재하는 기사의 URL을 포함하세요. JSON만.`,
-      true
+      `오늘(${today}) 주요 지정학·경제 뉴스를 빠르게 검색해서 5개만 JSON으로:\n[{"date":"${dateStr}","category":"지정학|전쟁|무역|에너지|금리|외교|자원","title":"15자 이내","body":"1~2문장","impact":"시사점 1문장","url":"기사 URL 또는 빈 문자열"}]\n검색은 1~2회만 하고 바로 JSON으로 답하세요. JSON만.`,
+      true,
+      2500,
+      55000
     );
     await kvSave("geomap:news:v1", {
       items: newsItems,
