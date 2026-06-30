@@ -2043,8 +2043,7 @@ async function fetchCountryUpdates() {
 
 // 페이지 로드 후 백그라운드에서 조용히 가져오기
 // 로드 완료 후 2초 뒤 실행 (지구본 초기화 우선)
-// 국가 업데이트 자동 호출 비활성화 (KV 캐시 미작동 시 비용 과다 방지)
-// window.addEventListener("load", () => setTimeout(fetchCountryUpdates, 2000));
+window.addEventListener("load", () => setTimeout(fetchCountryUpdates, 2000));
 
 // ── 스크롤 인디케이터 ──
 (function(){
