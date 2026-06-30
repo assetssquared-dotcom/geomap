@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   async function callSonnet(prompt, useWebSearch = false) {
     const body = {
       model: "claude-sonnet-4-6",
-      max_tokens: 2000,
+      max_tokens: 4000,
       system: `오늘은 ${today}입니다. ${useWebSearch ? "반드시 웹 검색으로 실제 최신 데이터를 확인하세요. 수치는 검색된 실제 값만 사용하세요." : "JSON만 출력하세요."}`,
       messages: [{ role: "user", content: prompt }]
     };
