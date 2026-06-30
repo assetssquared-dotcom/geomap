@@ -9,9 +9,8 @@ export default async function handler(req, res) {
   const today = new Date().toLocaleDateString("ko-KR", {
     year: "numeric", month: "long", day: "numeric"
   });
-  const dateStr = today.replace("년 ",".").replace("월 ",".").replace("일","").trim();
 
-  async function callSonnet(prompt, useWebSearch = false, maxTokens = 4000, timeoutMs = 55000) {
+  async function callSonnet(prompt, useWebSearch = false, maxTokens = 2500, timeoutMs = 50000) {
     const body = {
       model: "claude-sonnet-4-6",
       max_tokens: maxTokens,
@@ -49,6 +48,15 @@ export default async function handler(req, res) {
     return JSON.parse(clean);
   }
 
+  async function kvGet(key) {
+    const r = await fetch(`${kvUrl}/get/${key}`, { headers: { Authorization: `Bearer ${kvToken}` } });
+    if (!r.ok) return null;
+    const d = await r.json();
+    if (!d.result) return null;
+    try { return typeof d.result === "string" ? JSON.parse(d.result) : d.result; }
+    catch { return null; }
+  }
+
   async function kvSave(key, value) {
     await fetch(`${kvUrl}/del/${key}`, { method: "POST", headers: { Authorization: `Bearer ${kvToken}` } });
     await fetch(`${kvUrl}/set/${key}`, {
@@ -59,20 +67,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 뉴스만 처리 (국가/연결선 데이터는 /api/cron-countries, /api/cron-connections 에서 별도 처리)
-    const newsItems = await callSonnet(
-      `웹 검색으로 오늘(${today}) 실제 최신 지정학·경제 뉴스 기사 8개를 찾아서 JSON으로만:\n[{"date":"${dateStr}","category":"지정학|전쟁|무역|에너지|금리|외교|자원","title":"15자 이내","body":"2문장(실제수치포함)","impact":"시사점 1문장","url":"실제 기사 URL (https://로 시작, 없으면 빈 문자열)"}]\n반드시 실제 존재하는 기사의 URL을 포함하세요. JSON만.`,
+    const connData = await callSonnet(
+      `웹 검색으로 오늘(${today}) 아래 국가 쌍의 최신 관계 상황 확인 후 JSON으로:\nus-cn, us-kr, us-ir, ru-ua, il-ir, cn-tw\n형식: {"from-to":{"note":"최신 관계 2문장","watch":"투자 시사점","keyItems":[{"l":"항목","v":"설명"},{"l":"항목","v":"설명"},{"l":"항목","v":"설명"}]}}\nJSON만.`,
       true
     );
-    await kvSave("geomap:news:v1", {
-      items: newsItems,
+
+    const existing = (await kvGet("geomap:country-data:v3")) || { updates: {}, connections: {} };
+
+    await kvSave("geomap:country-data:v3", {
+      updates: existing.updates || {},
+      connections: connData,
       fetchedAt: new Date().toISOString(),
       fetchedAtKr: `${today} 오전 9시`,
-      nextUpdateKr: "내일 오전 9시",
-      source: "cron-sonnet-web"
+      source: "cron-connections"
     });
 
-    return res.status(200).json({ success: true, date: today, news: newsItems.length });
+    return res.status(200).json({ success: true, date: today, connections: Object.keys(connData).length });
 
   } catch (err) {
     return res.status(500).json({ error: err.message });
