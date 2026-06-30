@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     const body = {
       model: "claude-sonnet-4-6",
       max_tokens: 4000,
-      system: `오늘은 ${today}입니다. ${useWebSearch ? "반드시 웹 검색으로 실제 최신 데이터를 확인하세요. 수치는 검색된 실제 값만 사용하세요." : "JSON만 출력하세요."}`,
+      system: `오늘은 ${today}입니다. ${useWebSearch ? "반드시 웹 검색으로 실제 최신 데이터를 확인하세요. 수치는 검색된 실제 값만 사용하세요." : ""} 최종 응답은 반드시 JSON 데이터로만 끝나야 합니다. 검색 결과 설명, 서두, 요약 문장을 절대 먼저 출력하지 말고, 마지막 메시지는 순수 JSON(배열 또는 객체)으로만 작성하세요.`,
       messages: [{ role: "user", content: prompt }]
     };
     if (useWebSearch) body.tools = [{ type: "web_search_20250305", name: "web_search" }];
@@ -28,7 +28,18 @@ export default async function handler(req, res) {
     if (!r.ok) throw new Error(`Anthropic ${r.status}`);
     const d = await r.json();
     const text = d.content.filter(b => b.type === "text").pop()?.text?.trim() || "";
-    return JSON.parse(text.replace(/```json\n?|\n?```/g, "").trim());
+    let clean = text.replace(/```json\n?|\n?```/g, "").trim();
+    // 모델이 JSON 앞뒤에 설명 텍스트를 붙이는 경우 대비: 첫 { 또는 [ 부터 마지막 } 또는 ] 까지만 추출
+    const startIdx = Math.min(
+      ...[clean.indexOf("{"), clean.indexOf("[")].filter(i => i !== -1)
+    );
+    const lastBrace = clean.lastIndexOf("}");
+    const lastBracket = clean.lastIndexOf("]");
+    const endIdx = Math.max(lastBrace, lastBracket);
+    if (startIdx >= 0 && endIdx > startIdx) {
+      clean = clean.slice(startIdx, endIdx + 1);
+    }
+    return JSON.parse(clean);
   }
 
   async function kvSave(key, value) {
