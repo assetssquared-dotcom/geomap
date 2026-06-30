@@ -68,8 +68,10 @@ export default async function handler(req, res) {
 
   try {
     const connData = await callSonnet(
-      `웹 검색으로 오늘(${today}) 아래 국가 쌍의 최신 관계 상황 확인 후 JSON으로:\nus-cn, us-kr, us-ir, ru-ua\n형식: {"from-to":{"note":"최신 관계 2문장","watch":"투자 시사점","keyItems":[{"l":"항목","v":"설명"},{"l":"항목","v":"설명"},{"l":"항목","v":"설명"}]}}\nJSON만.`,
-      true
+      `웹 검색으로 오늘(${today}) 아래 국가 쌍의 최신 관계 상황 확인 후 JSON으로:\nus-cn, us-kr, us-ir, ru-ua\n형식: {"from-to":{"note":"최신 관계 2문장","watch":"투자 시사점","keyItems":[{"l":"항목","v":"설명"},{"l":"항목","v":"설명"}]}}\n각 항목은 간결하게. 검색 1~2회만 하고 JSON으로만 답하세요.`,
+      true,
+      4000,
+      58000
     );
 
     const existing = (await kvGet("geomap:country-data:v3")) || { updates: {}, connections: {} };
