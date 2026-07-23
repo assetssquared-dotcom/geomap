@@ -17,7 +17,8 @@ export default async function handler(req, res) {
       system: `오늘은 ${today}입니다. ${useWebSearch ? "반드시 웹 검색으로 실제 최신 데이터를 확인하세요. 수치는 검색된 실제 값만 사용하세요." : ""} 최종 응답은 반드시 JSON 데이터로만 끝나야 합니다. 검색 결과 설명, 서두, 요약 문장을 절대 먼저 출력하지 말고, 마지막 메시지는 순수 JSON(배열 또는 객체)으로만 작성하세요.`,
       messages: [{ role: "user", content: prompt }]
     };
-    if (useWebSearch) body.tools = [{ type: "web_search_20250305", name: "web_search" }];
+    // 웹검색 비활성화 (비용 절감 - 주 1회 실행)
+    // if (useWebSearch) body.tools = [{ type: "web_search_20250305", name: "web_search" }];
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -85,7 +86,7 @@ export default async function handler(req, res) {
   const batchResults = await Promise.allSettled(
     BATCHES.map(batch =>
       callSonnet(
-        `웹 검색으로 오늘(${today}) 아래 국가들의 최신 금리·정책·주요 이슈를 확인 후 JSON으로:\n${batch.map(id=>`${id}(${NAMES[id]||id})`).join(", ")}\n\n형식: {"국가ID":{"summary":"최신 현황 2문장","rate":{"name":"중앙은행","val":"현재 실제 금리","trend":"hawk|dove|hold","trendLabel":"기조","note":"최근 결정 배경"},"policy":[{"text":"<b>정책명</b> — 설명"},{"text":"<b>정책명</b> — 설명"}],"watchlist":[{"icon":"📌","text":"<b>이벤트</b> — 투자 시사점"}],"risk":["리스크1","리스크2"]}}\nJSON만.`,
+        `오늘(${today}) 기준 아래 국가들의 금리·정책·주요 이슈를 JSON으로:\n${batch.map(id=>`${id}(${NAMES[id]||id})`).join(", ")}\n\n형식: {"국가ID":{"summary":"최신 현황 2문장","rate":{"name":"중앙은행","val":"현재 실제 금리","trend":"hawk|dove|hold","trendLabel":"기조","note":"최근 결정 배경"},"policy":[{"text":"<b>정책명</b> — 설명"},{"text":"<b>정책명</b> — 설명"}],"watchlist":[{"icon":"📌","text":"<b>이벤트</b> — 투자 시사점"}],"risk":["리스크1","리스크2"]}}\nJSON만.`,
         true,
         4000,
         58000

@@ -17,7 +17,8 @@ export default async function handler(req, res) {
       system: `오늘은 ${today}입니다. ${useWebSearch ? "반드시 웹 검색으로 실제 최신 데이터를 확인하세요. 수치는 검색된 실제 값만 사용하세요." : ""} 최종 응답은 반드시 JSON 데이터로만 끝나야 합니다. 검색 결과 설명, 서두, 요약 문장을 절대 먼저 출력하지 말고, 마지막 메시지는 순수 JSON(배열 또는 객체)으로만 작성하세요.`,
       messages: [{ role: "user", content: prompt }]
     };
-    if (useWebSearch) body.tools = [{ type: "web_search_20250305", name: "web_search" }];
+    // 웹검색 비활성화 (비용 절감)
+    // if (useWebSearch) body.tools = [{ type: "web_search_20250305", name: "web_search" }];
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -68,8 +69,8 @@ export default async function handler(req, res) {
 
   try {
     const connData = await callSonnet(
-      `웹 검색으로 오늘(${today}) 아래 국가 쌍의 최신 관계 상황 확인 후 JSON으로:\nus-cn, us-kr, us-ir, ru-ua\n형식: {"from-to":{"note":"최신 관계 2문장","watch":"투자 시사점","keyItems":[{"l":"항목","v":"설명"},{"l":"항목","v":"설명"}]}}\n각 항목은 간결하게. 검색 1~2회만 하고 JSON으로만 답하세요.`,
-      true,
+      `오늘(${today}) 기준 아래 국가 쌍의 관계 현황을 JSON으로:\nus-cn, us-kr, us-ir, ru-ua\n형식: {"from-to":{"note":"최신 관계 2문장","watch":"투자 시사점","keyItems":[{"l":"항목","v":"설명"},{"l":"항목","v":"설명"}]}}\n각 항목은 간결하게. 검색 1~2회만 하고 JSON으로만 답하세요.`,
+      false,
       4000,
       58000
     );
